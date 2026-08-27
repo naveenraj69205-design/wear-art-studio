@@ -12,7 +12,7 @@ export interface Template {
 }
 
 const sticker = (id: string, x: number, y: number, size: number) => {
-  const s = STICKERS.find((k) => k.id === id) ?? STICKERS[0];
+  const s = STICKERS.find((k) => k.id === id) ?? STICKERS[0]!;
   return {
     ...elementDefaults.image(s.src, "sticker", s.name),
     x,

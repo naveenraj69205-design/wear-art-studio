@@ -212,7 +212,7 @@ export const useStudio = create<StudioState>()((set, get) => {
 
     setTool: (tool) => set({ tool }),
     setView: (view) => set({ view, selectedIds: [] }),
-    setProduct: (id) => mutate((d) => void (d.product = getProduct(id).id)),
+    setProduct: (id) => mutate((d) => void (d.product = getProduct(id)?.id ?? id)),
     setColor: (color) => mutate((d) => void (d.color = color)),
     setName: (name) => mutate((d) => void (d.name = name)),
     setZoom: (zoom) => set({ zoom: Math.min(4, Math.max(0.25, zoom)) }),
@@ -299,24 +299,34 @@ export const useStudio = create<StudioState>()((set, get) => {
       mutate((d) => {
         const list = d.views[get().view].elements;
         const [item] = list.splice(from, 1);
-        list.splice(to, 0, item);
+        if (item) list.splice(to, 0, item);
       }),
 
     bringForward: () =>
       mutate((d) => {
         const list = d.views[get().view].elements;
         const ids = get().selectedIds;
-        for (let i = list.length - 2; i >= 0; i--)
-          if (ids.includes(list[i].id) && !ids.includes(list[i + 1].id))
-            [list[i], list[i + 1]] = [list[i + 1], list[i]];
+        for (let i = list.length - 2; i >= 0; i--) {
+          const a = list[i];
+          const b2 = list[i + 1];
+          if (a && b2 && ids.includes(a.id) && !ids.includes(b2.id)) {
+            list[i] = b2;
+            list[i + 1] = a;
+          }
+        }
       }),
     sendBackward: () =>
       mutate((d) => {
         const list = d.views[get().view].elements;
         const ids = get().selectedIds;
-        for (let i = 1; i < list.length; i++)
-          if (ids.includes(list[i].id) && !ids.includes(list[i - 1].id))
-            [list[i], list[i - 1]] = [list[i - 1], list[i]];
+        for (let i = 1; i < list.length; i++) {
+          const a = list[i];
+          const b2 = list[i - 1];
+          if (a && b2 && ids.includes(a.id) && !ids.includes(b2.id)) {
+            list[i] = b2;
+            list[i - 1] = a;
+          }
+        }
       }),
     bringToFront: () =>
       mutate((d) => {
@@ -365,6 +375,7 @@ export const useStudio = create<StudioState>()((set, get) => {
           if (sorted.length < 3) return;
           const first = sorted[0];
           const last = sorted[sorted.length - 1];
+          if (!first || !last) return;
           const total = horiz
             ? last.x + last.width - first.x
             : last.y + last.height - first.y;
@@ -401,6 +412,7 @@ export const useStudio = create<StudioState>()((set, get) => {
       const s = get();
       if (!s.past.length) return;
       const prev = s.past[s.past.length - 1];
+      if (!prev) return;
       set({
         design: prev,
         past: s.past.slice(0, -1),
@@ -413,6 +425,7 @@ export const useStudio = create<StudioState>()((set, get) => {
       const s = get();
       if (!s.future.length) return;
       const next = s.future[0];
+      if (!next) return;
       set({
         design: next,
         future: s.future.slice(1),
